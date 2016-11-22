@@ -33,13 +33,24 @@ public class ServerThread extends Thread{
     /*듣고*/
     public void listen(){
         while(flag){
-
+            try {
+                String msg=buffr.readLine();
+                send(msg);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     /*보내고*/
-    public void send(){
-
+    public void send(String msg){
+        try {
+            buffw.write(msg);
+            buffw.write("\n");
+            buffw.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void run() {

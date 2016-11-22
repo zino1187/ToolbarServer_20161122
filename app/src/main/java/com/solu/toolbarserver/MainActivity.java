@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -22,7 +24,8 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity {
     BluetoothAdapter bluetoothAdapter;
     static final int REQUEST_BLUETOOTH_ENABLE=1;
-    static final int REQUEST_ACCESS_PERMISSION=2;
+    static final int REQUEST_DISCOVERABLE=2;
+
     TextView txt_status;
     /*클라이언트는 이 UUID 를 통해서 나의 서버로 접속
     * 하면 된다..*/
@@ -32,13 +35,26 @@ public class MainActivity extends AppCompatActivity {
     BluetoothServerSocket server;
     String serviceName;
     Thread acceptThread; /*접속자를 받기위한 쓰레드*/
+    Handler handler;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         txt_status=(TextView)findViewById(R.id.txt_status);
+
+        handler = new Handler(){
+            /*UI제어가 가능하다...왜  main Thread에서 호출*/
+            public void handleMessage(Message message) {
+                Bundle bundle=message.getData();
+                String msg=bundle.getString("msg");
+                txt_status.append(msg);
+            }
+        };
+
         checkSupportBluetooth();
         requestActiveBluetooth();
+        requestDiscoverable();
+        acceptDevice();
     }
 
     /*--------------------------------------------------
@@ -60,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_BLUETOOTH_ENABLE:
                 if(resultCode==RESULT_CANCELED){
                     showMsg("경고","앱을 사용하려면 블루투스를 활성화 해야 합니다.");
+                }break;
+            case REQUEST_DISCOVERABLE:
+                if(resultCode==RESULT_CANCELED){
+                    showMsg("경고","발견되게 해주세요!!");
                 }
         }
     }
@@ -81,6 +101,12 @@ public class MainActivity extends AppCompatActivity {
         acceptThread = new Thread(){
             public void run() {
                 try {
+                    Message message=new Message();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("msg", "서버준비됨\n");
+                    message.setData(bundle);
+                    handler.sendMessage(message);
+
                     BluetoothSocket socket=server.accept();
 
                     ServerThread st=new ServerThread(socket);
@@ -99,10 +125,17 @@ public class MainActivity extends AppCompatActivity {
         };
         acceptThread.start();
     }
-
+    /*클라이언트가 서버인 나를 발견할 수 있도록,
+       검색허용 옵션을 지정하자..
+    */
+    public void requestDiscoverable(){
+        Intent intent = new Intent();
+        intent.setAction(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 60*3);
+        startActivityForResult(intent, REQUEST_DISCOVERABLE);
+    }
 
     /*대화나누기*/
-
 
 
     public void showMsg(String title, String msg){
