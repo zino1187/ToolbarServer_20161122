@@ -109,8 +109,15 @@ public class MainActivity extends AppCompatActivity {
 
                     BluetoothSocket socket=server.accept();
 
-                    ServerThread st=new ServerThread(socket);
-                    st.start();/*클라이언트의 말 청취 시작!!*/
+                    Message message2=new Message();
+                    Bundle bundle2 = new Bundle();
+                    bundle2.putString("msg", "접속자 감지..\n");
+                    message2.setData(bundle2);
+                    handler.sendMessage(message2);
+
+
+                    //ServerThread st=new ServerThread(socket);
+                    //st.start();/*클라이언트의 말 청취 시작!!*/
 
                     /*
                      더이상 접속자 허용방지 !!
