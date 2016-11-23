@@ -36,9 +36,11 @@ public class MainActivity extends AppCompatActivity {
     String serviceName;
     Thread acceptThread; /*접속자를 받기위한 쓰레드*/
     Handler handler;
+    MainActivity mainActivity;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mainActivity=this;
         setContentView(R.layout.activity_main);
         txt_status=(TextView)findViewById(R.id.txt_status);
 
@@ -116,8 +118,8 @@ public class MainActivity extends AppCompatActivity {
                     handler.sendMessage(message2);
 
 
-                    //ServerThread st=new ServerThread(socket);
-                    //st.start();/*클라이언트의 말 청취 시작!!*/
+                    ServerThread st=new ServerThread(mainActivity, socket);
+                    st.start();/*클라이언트의 말 청취 시작!!*/
 
                     /*
                      더이상 접속자 허용방지 !!
